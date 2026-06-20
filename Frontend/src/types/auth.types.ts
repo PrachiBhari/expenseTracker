@@ -25,7 +25,8 @@ export interface RegisterRequest {
 }
 
 export interface AuthResponse {
-  token: string;
-  tokenType: string;
-  user: User;
+  accessToken:  string;   // matches Java field name in AuthResponse.java
+  refreshToken: string;
+  tokenType:    string;
+  user:         User;
 }

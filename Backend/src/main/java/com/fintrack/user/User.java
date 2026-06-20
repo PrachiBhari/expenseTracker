@@ -3,6 +3,7 @@ package com.fintrack.user;
 import com.fintrack.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -37,9 +38,8 @@ import java.util.List;
  */
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "users")
 public class User extends BaseEntity implements UserDetails {

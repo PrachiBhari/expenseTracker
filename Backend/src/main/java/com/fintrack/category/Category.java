@@ -4,6 +4,7 @@ import com.fintrack.common.BaseEntity;
 import com.fintrack.user.User;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 /**
  * JPA Entity: maps to the 'categories' table.
@@ -27,9 +28,8 @@ import lombok.*;
  */
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(
     name = "categories",

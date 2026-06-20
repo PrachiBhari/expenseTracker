@@ -5,6 +5,7 @@ import com.fintrack.common.BaseEntity;
 import com.fintrack.user.User;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,9 +32,8 @@ import java.time.LocalDate;
  */
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "incomes")
 public class Income extends BaseEntity {

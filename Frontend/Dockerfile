@@ -33,7 +33,16 @@ COPY package.json package-lock.json ./
 #   npm install: may update package-lock.json. Use during development.
 RUN npm ci
 
+# VITE_API_BASE_URL is baked into the JS bundle at build time by Vite.
+# In Docker, Nginx proxies /api/ → backend:8080, so a relative path works.
+# Default: /api/v1  (matches the Spring Boot server.servlet.context-path).
+# docker-compose passes this as a build arg so it can be overridden per env.
+ARG VITE_API_BASE_URL=/api/v1
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 # Copy source files and run the build.
+# Vite reads VITE_* env vars at build time — the value is statically replaced
+# in the bundle (like a compile-time constant, not a runtime config file).
 # Vite output lands in /app/dist
 COPY . .
 RUN npm run build

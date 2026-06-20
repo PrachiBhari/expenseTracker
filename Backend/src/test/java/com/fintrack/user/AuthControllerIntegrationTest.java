@@ -129,7 +129,7 @@ class AuthControllerIntegrationTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.error").value("Conflict"))
-                .andExpect(jsonPath("$.message").containsString(TEST_EMAIL));
+                .andExpect(jsonPath("$.message").value(containsString(TEST_EMAIL)));
     }
 
     @Test

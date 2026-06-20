@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { flushSync } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,7 +35,12 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const response = await loginUser(data);
-      login(response.token, response.user);
+      // flushSync forces React to apply setToken + setUser synchronously before
+      // navigate() fires. Without it, ProtectedRoute reads stale isAuthenticated=false
+      // and immediately redirects back to /login.
+      flushSync(() => {
+        login(response.accessToken, response.user);
+      });
       toast.success(`Welcome back, ${response.user.fullName}!`);
       navigate('/', { replace: true });
     } catch (err: unknown) {

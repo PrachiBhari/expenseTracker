@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { flushSync } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -45,7 +46,9 @@ export default function RegisterPage() {
         email:    formData.email,
         password: formData.password,
       });
-      login(response.token, response.user);
+      flushSync(() => {
+        login(response.accessToken, response.user);
+      });
       toast.success('Account created! Welcome to FinTrack.');
       navigate('/', { replace: true });
     } catch (err: unknown) {

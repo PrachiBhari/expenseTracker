@@ -1,5 +1,6 @@
 package com.fintrack.user;
 
+import com.fintrack.category.Category;
 import com.fintrack.category.CategoryRepository;
 import com.fintrack.common.exception.DuplicateResourceException;
 import com.fintrack.security.JwtService;
@@ -110,7 +111,8 @@ class UserServiceTest {
         // Verify exactly 14 default categories were seeded
         // ArgumentCaptor captures the actual argument passed to saveAll()
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<Object>> captor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<Category>> captor =
+                (ArgumentCaptor<List<Category>>) (ArgumentCaptor<?>) ArgumentCaptor.forClass(List.class);
         verify(categoryRepository).saveAll(captor.capture());
         assertThat(captor.getValue()).hasSize(14);
     }

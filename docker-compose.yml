@@ -72,7 +72,7 @@ services:
       # so port-8080 CORS is only needed for direct Swagger access from the host.
       CORS_ALLOWED_ORIGINS: http://localhost,http://localhost:8080
     ports:
-      - "8080:8080"   # Expose directly to host — convenient for Swagger UI access
+      - "8081:8080"   # Host 8081 → container 8080 (8080 is taken by Oracle TNS listener)
     depends_on:
       db:
         condition: service_healthy   # Don't start until PostgreSQL is accepting connections
@@ -95,6 +95,11 @@ services:
     build:
       context: ./Frontend
       dockerfile: Dockerfile
+      args:
+        # Vite bakes this into the JS bundle at build time.
+        # /api/v1 is a relative URL — Nginx proxies it to backend:8080.
+        # This avoids any localhost:PORT reference in the compiled bundle.
+        VITE_API_BASE_URL: /api/v1
     container_name: fintrack-frontend
     ports:
       - "80:80"          # Primary user-facing port — http://localhost
