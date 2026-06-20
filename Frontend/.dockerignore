@@ -1,0 +1,29 @@
+# =============================================================================
+# Frontend/.dockerignore
+#
+# Files excluded from the Docker build context.
+# The most important exclusion is node_modules/ — it's huge (~800MB)
+# and gets rebuilt inside Docker with 'npm ci' anyway.
+# =============================================================================
+
+# Dependencies — rebuilt via 'npm ci' inside the builder stage
+node_modules/
+
+# Vite build output — rebuilt via 'npm run build' inside the builder stage
+dist/
+
+# Environment files — never bake secrets into a Docker image
+.env
+.env.*
+!.env.example    # .env.example is safe to include (no real secrets)
+
+# Git history
+.git/
+.gitignore
+
+# Documentation
+*.md
+
+# Editor configs
+.vscode/
+.idea/

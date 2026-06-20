@@ -1,0 +1,127 @@
+# =============================================================================
+# DOCKER COMPOSE — Full Stack (PostgreSQL + Spring Boot + React/Nginx)
+#
+# Three services start in dependency order:
+#   db       starts first (health checked)
+#   backend  starts after db is healthy (health checked)
+#   frontend starts after backend is healthy
+#
+# Commands:
+#   docker compose up --build        # build images and start all services
+#   docker compose up -d             # run in background
+#   docker compose logs -f backend   # tail backend logs
+#   docker compose down              # stop and remove containers
+#   docker compose down -v           # also wipe the postgres_data volume
+#
+# Prerequisites:
+#   1. Copy .env.example → .env and fill in real values
+#   2. Make sure JWT_SECRET is set (no default — app will refuse to start)
+# =============================================================================
+
+services:
+
+  # ── PostgreSQL Database ──────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: fintrack-db
+    environment:
+      POSTGRES_DB:       ${DB_NAME:-fintrack}
+      POSTGRES_USER:     ${DB_USERNAME:-fintrack}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-fintrack}
+    ports:
+      - "5432:5432"          # Expose to host — connect with DBeaver/psql for debugging
+    volumes:
+      - postgres_data:/var/lib/postgresql/data   # Persist data across restarts
+    networks:
+      - fintrack-network
+    healthcheck:
+      # pg_isready: official PostgreSQL health check tool built into the image.
+      # Returns 0 if the DB is accepting connections, non-zero otherwise.
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-fintrack} -d ${DB_NAME:-fintrack}"]
+      interval: 10s      # Re-check every 10 seconds
+      timeout: 5s        # Fail if no response in 5 seconds
+      retries: 5         # Mark unhealthy after 5 consecutive failures
+      start_period: 30s  # Give PostgreSQL 30 seconds to initialize before first check
+
+  # ── Spring Boot Backend ──────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: fintrack-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+
+      # 'db' is the Docker Compose service name — Docker's internal DNS resolves it.
+      # Never use 'localhost' here; 'localhost' inside the backend container refers
+      # to the backend container itself, not the database container.
+      DB_URL:      jdbc:postgresql://db:5432/${DB_NAME:-fintrack}
+      DB_USERNAME: ${DB_USERNAME:-fintrack}
+      DB_PASSWORD: ${DB_PASSWORD:-fintrack}
+
+      # JWT_SECRET has NO default — intentionally forces you to set it in .env.
+      # If unset, application.yml falls back to the dev placeholder, which is
+      # fine in dev but unacceptable in prod.
+      JWT_SECRET:               ${JWT_SECRET}
+      JWT_ACCESS_EXPIRATION:    ${JWT_ACCESS_EXPIRATION:-900000}
+      JWT_REFRESH_EXPIRATION:   ${JWT_REFRESH_EXPIRATION:-604800000}
+
+      # CORS: allow requests from the Nginx frontend (same machine, port 80).
+      # 'http://localhost' = Origin header browsers send for port-80 requests.
+      # Note: when Nginx proxies /api/ → backend, the browser never sees port 8080,
+      # so port-8080 CORS is only needed for direct Swagger access from the host.
+      CORS_ALLOWED_ORIGINS: http://localhost,http://localhost:8080
+    ports:
+      - "8080:8080"   # Expose directly to host — convenient for Swagger UI access
+    depends_on:
+      db:
+        condition: service_healthy   # Don't start until PostgreSQL is accepting connections
+    networks:
+      - fintrack-network
+    restart: unless-stopped
+    healthcheck:
+      # Hit the Spring Boot Actuator health endpoint (added in Phase 7).
+      # /api/v1 = context-path, /actuator/health = actuator base-path + endpoint.
+      # wget --spider: fetch headers only (like HTTP HEAD) — minimal overhead.
+      # wget is always available in Alpine images; curl is not guaranteed.
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/api/v1/actuator/health || exit 1"]
+      interval: 15s      # Spring Boot takes 10-20s to start — check every 15s after that
+      timeout: 10s       # Wait up to 10s for a response
+      retries: 5         # Mark unhealthy after 5 failures
+      start_period: 90s  # Give Spring Boot + Flyway migrations time to finish before first check
+
+  # ── React Frontend (Nginx) ──────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: fintrack-frontend
+    ports:
+      - "80:80"          # Primary user-facing port — http://localhost
+    depends_on:
+      backend:
+        condition: service_healthy   # Don't start until Spring Boot is healthy
+    networks:
+      - fintrack-network
+    restart: unless-stopped
+
+# =============================================================================
+# VOLUMES
+# Named volume: Docker manages the storage path automatically.
+# Data survives 'docker compose down' but NOT 'docker compose down -v'.
+# =============================================================================
+volumes:
+  postgres_data:
+    name: fintrack_postgres_data
+
+# =============================================================================
+# NETWORKS
+# Custom bridge network: containers communicate using service names as hostnames.
+# 'backend' can reach 'db' at hostname 'db'.
+# 'frontend' (Nginx) can reach 'backend' at hostname 'backend'.
+# No external network access between containers — only via this bridge.
+# =============================================================================
+networks:
+  fintrack-network:
+    driver: bridge
+    name: fintrack-network

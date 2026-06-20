@@ -1,0 +1,32 @@
+# =============================================================================
+# application-test.yml — Used during unit/slice tests (@ActiveProfiles("test"))
+# H2 in-memory DB replaces PostgreSQL so tests run without a real database.
+# Flyway disabled — we use ddl-auto=create-drop to let Hibernate create tables.
+# =============================================================================
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:fintrack_test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: true
+  flyway:
+    enabled: false    # H2 does not understand PostgreSQL-specific SQL syntax
+
+jwt:
+  secret: test-secret-key-for-unit-testing-only-must-be-256-bits-long-abc123
+  access-token-expiration: 900000
+  refresh-token-expiration: 604800000
+
+app:
+  cors:
+    allowed-origins: http://localhost:5173
+
+logging:
+  level:
+    com.fintrack: DEBUG

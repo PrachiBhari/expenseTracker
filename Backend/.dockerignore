@@ -1,0 +1,30 @@
+# =============================================================================
+# Backend/.dockerignore
+#
+# Lists files/dirs that Docker EXCLUDES from the build context.
+# The build context is the directory tree sent to the Docker daemon.
+# Smaller context = faster build (less data to transfer).
+# =============================================================================
+
+# Maven build output — we rebuild inside Docker, don't copy pre-compiled classes
+target/
+
+# IDE files — IntelliJ IDEA project metadata
+.idea/
+*.iml
+
+# Maven wrapper scripts — we use the Maven image in Docker, not the local wrapper
+.mvn/
+mvnw
+mvnw.cmd
+
+# Git history — not needed inside the container
+.git/
+.gitignore
+
+# Environment files — secrets must NEVER be baked into a Docker image
+.env
+.env.*
+
+# Documentation
+*.md

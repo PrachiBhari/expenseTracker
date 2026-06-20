@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- =====================================================================
+         PARENT: Spring Boot starter-parent manages all dependency versions.
+         We do NOT need to specify versions for Spring dependencies — the
+         BOM (Bill of Materials) in the parent handles that.
+    ===================================================================== -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.0</version>
+        <relativePath/>
+    </parent>
+
+    <!-- Project coordinates: groupId + artifactId + version = unique identifier -->
+    <groupId>com.fintrack</groupId>
+    <artifactId>fintrack-backend</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>fintrack-backend</name>
+    <description>FinTrack — Personal Expense Tracker REST API</description>
+
+    <!-- =====================================================================
+         PROPERTIES: Centralize version numbers here.
+         Overrides the lombok.version from the parent BOM.
+    ===================================================================== -->
+    <properties>
+        <java.version>21</java.version>
+        <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <lombok.version>1.18.32</lombok.version>
+        <jjwt.version>0.12.6</jjwt.version>
+        <springdoc.version>2.5.0</springdoc.version>
+    </properties>
+
+    <dependencies>
+
+        <!-- =============================================================
+             1. SPRING BOOT WEB
+             Brings in: Spring MVC (DispatcherServlet), Tomcat (embedded
+             server), Jackson (JSON serialization).
+             Interview: "Why embedded server?" — no separate server install;
+             just java -jar. Self-contained, portable.
+        ============================================================= -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- =============================================================
+             2. SPRING SECURITY
+             Provides: authentication/authorization filter chain, BCrypt
+             password encoder, CORS support, CSRF protection.
+             We configure a custom SecurityFilterChain in SecurityConfig.
+        ============================================================= -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- =============================================================
+             3. SPRING DATA JPA
+             Brings in: Spring Data JPA, Hibernate ORM, JDBC.
+             Lets us write Repository interfaces; Spring generates the SQL.
+        ============================================================= -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- =============================================================
+             4. BEAN VALIDATION
+             Brings in: Hibernate Validator (Jakarta Bean Validation impl).
+             Powers @Valid, @NotNull, @Email, @Min, @Max etc. on DTOs.
+        ============================================================= -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- =============================================================
+             5. POSTGRESQL DRIVER
+             Runtime scope: only needed when the app actually runs.
+             Not needed at compile time — JPA API abstracts the driver.
+        ============================================================= -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- =============================================================
+             6. FLYWAY — Database Migration
+             flyway-core: the migration engine.
+             flyway-database-postgresql: required in Flyway 10+ for PG support.
+             Runs SQL scripts (V1__init.sql, V2__seed.sql) automatically on startup.
+             Interview: "Why Flyway over Hibernate ddl-auto=update?"
+             Flyway gives versioned, reviewable, reproducible schema.
+             ddl-auto=update is dangerous — it can silently drop columns.
+        ============================================================= -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <!-- =============================================================
+             7. JWT (JSON Web Tokens) — jjwt library
+             jjwt-api:     compile-time API (what we call in code)
+             jjwt-impl:    runtime implementation (parsing, signing)
+             jjwt-jackson: JSON serialization for JWT payload using Jackson
+             impl + jackson are runtime only — we never reference their
+             classes directly in our code.
+        ============================================================= -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- =============================================================
+             8. LOMBOK
+             Generates boilerplate at compile time: @Getter, @Setter,
+             @Builder, @AllArgsConstructor, @NoArgsConstructor, @Slf4j.
+             optional=true: not leaked to projects that depend on us.
+        ============================================================= -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- =============================================================
+             9. MAPSTRUCT
+             Compile-time DTO <-> Entity mapper generator.
+             Interview: "Why MapStruct over ModelMapper?"
+             MapStruct generates plain Java code at build time (no reflection).
+             Faster at runtime, errors caught at compile time, easy to debug.
+        ============================================================= -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${mapstruct.version}</version>
+        </dependency>
+
+        <!-- =============================================================
+             10. SPRINGDOC OPENAPI (Swagger UI)
+             Auto-generates OpenAPI 3.0 spec from our @RestController code.
+             Swagger UI served at /swagger-ui.html — interactive API explorer.
+        ============================================================= -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
+
+        <!-- =============================================================
+             11. SPRING BOOT ACTUATOR
+             Adds production-ready monitoring endpoints.
+             /actuator/health — used by Docker HEALTHCHECK and load balancers.
+             /actuator/info  — shows app version and metadata.
+             Only health and info are exposed (configured in application.yml).
+             All other actuator endpoints (metrics, env, beans) stay hidden.
+        ============================================================= -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- =============================================================
+             12. H2 IN-MEMORY DATABASE (test scope only)
+             Used during unit tests so tests don't need a real PostgreSQL.
+             We disable Flyway in test profile and use ddl-auto=create-drop.
+        ============================================================= -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- =============================================================
+             12. TESTING DEPENDENCIES
+             spring-boot-starter-test: JUnit 5, Mockito, AssertJ, MockMvc.
+             spring-security-test: @WithMockUser, SecurityMockMvc helpers.
+        ============================================================= -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+
+            <!-- ==========================================================
+                 SPRING BOOT MAVEN PLUGIN
+                 Creates a fat/uber JAR: packages our code + all dependencies
+                 into one executable JAR. Exclude Lombok from the final JAR
+                 (it's only needed at compile time, not at runtime).
+            ========================================================== -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <!-- ==========================================================
+                 MAVEN COMPILER PLUGIN
+                 annotationProcessorPaths: tells the Java compiler to run
+                 Lombok and MapStruct annotation processors during compilation.
+                 ORDER MATTERS: Lombok must run before MapStruct so that
+                 MapStruct can see the Lombok-generated methods (getters/setters).
+            ========================================================== -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${mapstruct.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                    <compilerArgs>
+                        <arg>-Amapstruct.defaultComponentModel=spring</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+</project>

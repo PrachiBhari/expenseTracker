@@ -1,0 +1,150 @@
+# =============================================================================
+# application.yml — Base configuration loaded in ALL profiles.
+# Profile-specific files (application-dev.yml, application-prod.yml)
+# overlay on top of this. 12-factor style: secrets come from env vars.
+# =============================================================================
+
+spring:
+  application:
+    name: fintrack-backend
+
+  # Active profile: reads SPRING_PROFILES_ACTIVE env var, defaults to 'dev'
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  # ---------------------------------------------------------------------------
+  # DATASOURCE — PostgreSQL connection
+  # All sensitive values come from environment variables.
+  # HikariCP is Spring Boot's default connection pool.
+  # ---------------------------------------------------------------------------
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/fintrack}
+    username: ${DB_USERNAME:fintrack}
+    password: ${DB_PASSWORD:fintrack}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10       # max DB connections in the pool
+      minimum-idle: 5             # idle connections kept alive
+      connection-timeout: 30000   # 30 sec wait before "no connection" error
+      pool-name: FinTrackHikariPool
+
+  # ---------------------------------------------------------------------------
+  # JPA / HIBERNATE
+  # ddl-auto: validate — Hibernate checks that the schema matches our entities
+  # but NEVER changes it. Flyway owns all DDL changes.
+  # open-in-view: false — prevents keeping a DB connection open for the entire
+  # HTTP request lifecycle (a common performance anti-pattern).
+  # ---------------------------------------------------------------------------
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+
+  # ---------------------------------------------------------------------------
+  # FLYWAY — Schema migrations
+  # Flyway runs automatically on startup, applies any pending V*.sql scripts,
+  # and tracks applied migrations in the 'flyway_schema_history' table.
+  # ---------------------------------------------------------------------------
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+
+# =============================================================================
+# SERVER
+# context-path: /api/v1 — all controllers are automatically prefixed.
+# Controllers only map /expenses, /categories, etc. — clean and short.
+# =============================================================================
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /api/v1
+  error:
+    include-message: always        # overridden to 'never' in prod profile
+    include-exception: false       # never expose exception class names (e.g. NullPointerException)
+    include-stacktrace: never      # never expose stack traces in /error fallback responses
+
+# =============================================================================
+# JWT CONFIGURATION
+# secret: HMAC-SHA256 signing key — must be >= 32 chars (256 bits).
+#         NEVER commit the real value. Comes from env var in all environments.
+# access-token-expiration:  15 minutes (900,000 ms) — short-lived for security.
+# refresh-token-expiration: 7 days (604,800,000 ms) — stored in DB, revocable.
+# =============================================================================
+jwt:
+  secret: ${JWT_SECRET:ThisIsADefaultDevSecretKeyThatMustBeChangedInProduction!!}
+  access-token-expiration: ${JWT_ACCESS_EXPIRATION:900000}
+  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+
+# =============================================================================
+# APPLICATION CUSTOM CONFIG
+# cors.allowed-origins: whitelist for browsers (CORS preflight).
+#   In dev:  Vite dev server on port 5173.
+#   In prod: actual frontend domain.
+# =============================================================================
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:80}
+
+# =============================================================================
+# SPRINGDOC / SWAGGER UI
+# api-docs path:   /api/v1/api-docs     (raw OpenAPI JSON)
+# swagger-ui path: /api/v1/swagger-ui.html (interactive browser UI)
+# =============================================================================
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+  default-produces-media-type: application/json
+
+# =============================================================================
+# ACTUATOR — health check and monitoring
+# base-path: /actuator → full URL is /api/v1/actuator/health (via context-path)
+# expose: only health and info — NEVER expose env, beans, or metrics publicly.
+# show-details: when-authorized → full health details only for authenticated users.
+#   Anonymous calls (Docker health check) receive { "status": "UP" } only.
+# =============================================================================
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: ${spring.application.name}
+    version: '@project.version@'
+    description: FinTrack Personal Finance REST API
+
+# =============================================================================
+# LOGGING (base level — profiles override)
+# %X{requestId} — MDC value set by RequestLoggingFilter.
+#   Empty string when not set (startup logs before any request).
+#   8-char hex ID when inside a request: [a1b2c3d4].
+# =============================================================================
+logging:
+  level:
+    com.fintrack: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.flywaydb: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%X{requestId}] %logger{36} - %msg%n"

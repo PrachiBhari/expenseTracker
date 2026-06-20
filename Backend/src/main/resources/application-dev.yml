@@ -1,0 +1,15 @@
+# =============================================================================
+# application-dev.yml — Activated when SPRING_PROFILES_ACTIVE=dev
+# Overlays on top of application.yml. Only overrides what dev needs different.
+# =============================================================================
+
+spring:
+  jpa:
+    show-sql: true          # Print every SQL query to console in dev — helpful for debugging
+
+logging:
+  level:
+    com.fintrack: DEBUG                    # See all our app logs
+    org.springframework.security: DEBUG    # See auth filter decisions
+    org.hibernate.SQL: DEBUG               # See every SQL statement
+    org.hibernate.type.descriptor.sql: TRACE  # See SQL bind parameter values

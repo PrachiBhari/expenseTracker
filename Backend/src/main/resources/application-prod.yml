@@ -1,0 +1,37 @@
+# =============================================================================
+# application-prod.yml — Activated when SPRING_PROFILES_ACTIVE=prod
+# Tighter security: no SQL logging, no stack traces in responses,
+# minimal log output.
+# =============================================================================
+
+spring:
+  jpa:
+    show-sql: false
+
+server:
+  error:
+    include-message: never        # Never expose internal messages to clients
+    include-exception: false      # Never expose exception class names to clients
+    include-stacktrace: never     # Never expose stack traces to clients
+    include-binding-errors: never
+
+logging:
+  level:
+    com.fintrack: WARN
+    org.springframework: ERROR
+    root: ERROR
+
+# =============================================================================
+# ACTUATOR — production overrides
+# In prod, expose ONLY health (not info) — info can leak version/env details.
+# show-details: never — anonymous health checks get { "status": "UP" } only.
+#   Health details (DB connection, disk space) must not be public in production.
+# =============================================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never

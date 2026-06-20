@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+
+# Build files
+dist/
+build/
+target/
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IntelliJ
+*.iml
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Generated files
+coverage/
+
+# React
+frontend/node_modules/
+frontend/dist/
+
+# Spring Boot
+backend/target/
+backend/.mvn/
+Backend/target/
+Backend/.mvn/
+*.jar
+*.war
