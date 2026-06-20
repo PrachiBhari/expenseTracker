@@ -6,7 +6,7 @@
 | **Document Type** | Technical Requirements Document |
 | **Version** | 1.0 (MVP) |
 | **Status** | Draft |
-| **Owner** | *[Your Name]* |
+| **Owner** | *[Prachi Bhari & Rahul]* |
 | **Last Updated** | June 2026 |
 | **Related Docs** | `PRD.md` (Product Requirements Document) |
 
