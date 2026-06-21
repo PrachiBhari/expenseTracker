@@ -1,0 +1,601 @@
+{
+  "info": {
+    "name": "FinTrack API",
+    "description": "Complete API collection for FinTrack Personal Finance Dashboard.\n\nSetup:\n1. Set the `baseUrl` variable to your environment (local or production)\n2. Run 'Login' — the token is saved automatically to the `token` variable\n3. All protected requests use {{token}} automatically\n\nLocal:      http://localhost:8080/api/v1\nProduction: https://expensetracker-jdzs.onrender.com/api/v1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://expensetracker-jdzs.onrender.com/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Prachi Bhari\",\n  \"email\": \"prachi@example.com\",\n  \"password\": \"mypassword123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('token', json.accessToken);",
+                  "  console.log('Token saved:', json.accessToken.substring(0, 20) + '...');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@fintrack.com\",\n  \"password\": \"demo1234\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('token', json.accessToken);",
+                  "  console.log('Token saved automatically');",
+                  "  pm.test('Login successful', () => pm.expect(json.accessToken).to.be.a('string'));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/refresh", "host": ["{{baseUrl}}"], "path": ["auth", "refresh"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"paste-your-refresh-token-here\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/users/me", "host": ["{{baseUrl}}"], "path": ["users", "me"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has email', () => pm.expect(pm.response.json().email).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "List All Categories",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Expense Categories",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/categories?type=EXPENSE",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories"],
+              "query": [{ "key": "type", "value": "EXPENSE" }]
+            }
+          }
+        },
+        {
+          "name": "List Income Categories",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/categories?type=INCOME",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories"],
+              "query": [{ "key": "type", "value": "INCOME" }]
+            }
+          }
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Travel\",\n  \"type\": \"EXPENSE\",\n  \"color\": \"#B8E0D2\",\n  \"icon\": \"plane\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('categoryId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/categories/{{categoryId}}", "host": ["{{baseUrl}}"], "path": ["categories", "{{categoryId}}"] }
+          }
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/categories/{{categoryId}}", "host": ["{{baseUrl}}"], "path": ["categories", "{{categoryId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Travel & Transport\",\n  \"type\": \"EXPENSE\",\n  \"color\": \"#A8D5BA\",\n  \"icon\": \"plane\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/categories/{{categoryId}}", "host": ["{{baseUrl}}"], "path": ["categories", "{{categoryId}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Expenses",
+      "item": [
+        {
+          "name": "List Expenses (latest)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/expenses?page=0&size=10&sort=expenseDate,desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["expenses"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" },
+                { "key": "sort", "value": "expenseDate,desc" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has content array', () => pm.expect(pm.response.json().content).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Expenses (this month)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/expenses?from=2026-06-01&to=2026-06-30&page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["expenses"],
+              "query": [
+                { "key": "from", "value": "2026-06-01" },
+                { "key": "to", "value": "2026-06-30" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Expenses (search by text)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/expenses?q=groceries&page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["expenses"],
+              "query": [
+                { "key": "q", "value": "groceries" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Expense",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/expenses", "host": ["{{baseUrl}}"], "path": ["expenses"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 350.00,\n  \"categoryId\": 15,\n  \"description\": \"Groceries from D-Mart\",\n  \"expenseDate\": \"2026-06-20\",\n  \"paymentMethod\": \"UPI\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('expenseId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Expense by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/expenses/{{expenseId}}", "host": ["{{baseUrl}}"], "path": ["expenses", "{{expenseId}}"] }
+          }
+        },
+        {
+          "name": "Update Expense",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/expenses/{{expenseId}}", "host": ["{{baseUrl}}"], "path": ["expenses", "{{expenseId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 420.00,\n  \"categoryId\": 15,\n  \"description\": \"Groceries from D-Mart (updated)\",\n  \"expenseDate\": \"2026-06-20\",\n  \"paymentMethod\": \"Credit Card\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Expense",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/expenses/{{expenseId}}", "host": ["{{baseUrl}}"], "path": ["expenses", "{{expenseId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Incomes",
+      "item": [
+        {
+          "name": "List Incomes (latest)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/incomes?page=0&size=10&sort=incomeDate,desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["incomes"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" },
+                { "key": "sort", "value": "incomeDate,desc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Income",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/incomes", "host": ["{{baseUrl}}"], "path": ["incomes"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 65000.00,\n  \"categoryId\": 25,\n  \"source\": \"TechCorp Pvt Ltd\",\n  \"description\": \"June salary\",\n  \"incomeDate\": \"2026-06-30\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('incomeId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Income by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/incomes/{{incomeId}}", "host": ["{{baseUrl}}"], "path": ["incomes", "{{incomeId}}"] }
+          }
+        },
+        {
+          "name": "Update Income",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/incomes/{{incomeId}}", "host": ["{{baseUrl}}"], "path": ["incomes", "{{incomeId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 70000.00,\n  \"categoryId\": 25,\n  \"source\": \"TechCorp Pvt Ltd\",\n  \"description\": \"June salary + bonus\",\n  \"incomeDate\": \"2026-06-30\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Income",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/incomes/{{incomeId}}", "host": ["{{baseUrl}}"], "path": ["incomes", "{{incomeId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Summary — This Month",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/summary?from=2026-06-01&to=2026-06-30",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "summary"],
+              "query": [
+                { "key": "from", "value": "2026-06-01" },
+                { "key": "to", "value": "2026-06-30" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Has totalIncome', () => pm.expect(json.totalIncome).to.be.a('number'));",
+                  "pm.test('Has totalExpense', () => pm.expect(json.totalExpense).to.be.a('number'));",
+                  "pm.test('netBalance = income - expense', () => {",
+                  "  pm.expect(json.netBalance).to.equal(json.totalIncome - json.totalExpense);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Summary — Current Month (default)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/analytics/summary", "host": ["{{baseUrl}}"], "path": ["analytics", "summary"] }
+          }
+        },
+        {
+          "name": "Category Breakdown — Expenses",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/by-category?type=EXPENSE&from=2026-06-01&to=2026-06-30",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "by-category"],
+              "query": [
+                { "key": "type", "value": "EXPENSE" },
+                { "key": "from", "value": "2026-06-01" },
+                { "key": "to", "value": "2026-06-30" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Is array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "pm.test('Sorted by total desc', () => {",
+                  "  const arr = pm.response.json();",
+                  "  for (let i = 0; i < arr.length - 1; i++) {",
+                  "    pm.expect(arr[i].total).to.be.at.least(arr[i+1].total);",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Category Breakdown — Incomes",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/by-category?type=INCOME",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "by-category"],
+              "query": [{ "key": "type", "value": "INCOME" }]
+            }
+          }
+        },
+        {
+          "name": "Trends — Last 6 Months",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/trends?months=6",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "trends"],
+              "query": [{ "key": "months", "value": "6" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns 6 months', () => pm.expect(pm.response.json()).to.have.lengthOf(6));",
+                  "pm.test('Each point has month, income, expense', () => {",
+                  "  pm.response.json().forEach(pt => {",
+                  "    pm.expect(pt).to.have.property('month');",
+                  "    pm.expect(pt).to.have.property('income');",
+                  "    pm.expect(pt).to.have.property('expense');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Trends — Last 3 Months",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/trends?months=3",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "trends"],
+              "query": [{ "key": "months", "value": "3" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/actuator/health", "host": ["{{baseUrl}}"], "path": ["actuator", "health"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status UP', () => pm.expect(pm.response.json().status).to.equal('UP'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

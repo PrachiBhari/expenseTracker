@@ -7,11 +7,7 @@
 | **Document Type** | Product Requirements Document |
 | **Version** | 1.0 (MVP) |
 | **Status** | Draft |
-<<<<<<< Updated upstream
-| **Owner** | *[Your Name]* |
-=======
-| **Owner** | *[{Prachi Bhari}]* |
->>>>>>> Stashed changes
+| **Owner** | Prachi Bhari |
 | **Last Updated** | June 2026 |
 | **Related Docs** | `TRD.md` (Technical Requirements Document) |
 
